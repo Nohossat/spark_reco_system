@@ -68,7 +68,10 @@ class HSpark {
 
     // Filter to avoid recommending some obscure movie
     val ratingCounts = ratings.groupBy("movieID").count().filter("count > 100")
-    val popularMovies = ratingCounts.select("movieID").withColumn("userID", lit(237)).rdd.map(row => (row(0).toString.toInt, row(1).toString.toInt))
+    val popularMovies = ratingCounts.select("movieID")
+    .withColumn("userID", lit(237))
+    .rdd
+    .map(row => (row(0).toString.toInt, row(1).toString.toInt))
 
     // convert to RDD
     val popularMoviesRDD = spark.sparkContext.parallelize(popularMovies.collect())

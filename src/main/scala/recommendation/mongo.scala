@@ -9,40 +9,44 @@ import com.mongodb.spark.config._
 import org.apache.log4j.{Logger,Level}
 import org.bson.Document
 import org.apache.spark.mllib.recommendation.Rating
+import scala.collection.mutable
 
 class Mongo {
+
   def connectToMongoDb() : SparkSession = {
     Logger.getLogger("org").setLevel(Level.OFF)
     Logger.getLogger("akka").setLevel(Level.OFF)
 
-    val spark = SparkSession.builder()
-    .master("local[4]")
+    val sp = SparkSession.builder()
+    .master("local[8]")
     .appName("MongoSparkConnectorIntro")
     .config("spark.mongodb.input.uri", "mongodb+srv://m001-student:m001-mongodb-basics@nodecluster-dfgwa.mongodb.net/simplon?readPreference=primaryPreferred")
     .config("spark.mongodb.output.uri", "mongodb+srv://m001-student:m001-mongodb-basics@nodecluster-dfgwa.mongodb.net/simplon")
     .config("spark.executor.heartbeatInterval", "10s")
     .getOrCreate()
 
-    import spark.implicits._
+    sp.sparkContext.setLogLevel("ERROR")
 
-    spark.sparkContext.setLogLevel("ERROR")
-
-    return spark
+    return sp
   }
 
-  def getCollection(sc : SparkSession, collection : String) : Dataset[Row] = {
+  val spark = connectToMongoDb()
+  import spark.implicits._
+  val moviesRdd = getCollection("movies")
+  val usersRdd = getCollection("users")
+
+  def getCollection(collection : String) : Dataset[Row] = {
     var readConfig = ReadConfig(Map(
     "uri" -> "mongodb+srv://m001-student:m001-mongodb-basics@nodecluster-dfgwa.mongodb.net/", 
     "database" -> "simplon", 
     "collection" -> collection))
 
-    val rdd = MongoSpark.load(sc, readConfig)
+    val rdd = MongoSpark.load(spark, readConfig)
     return rdd
   }
 
   def getDataAnalysis(): Unit = {
     val spark = connectToMongoDb()
-    val usersRdd = getCollection(spark, "users")
     
     // EDA for users
     println("Analysis for Movielens users")
@@ -82,7 +86,7 @@ class Mongo {
     .sort(asc("occupation"))
     .show()
 
-    val moviesRdd = getCollection(spark, "movies")
+    // EDA for movies collection
 
     println(s"the number of movies is ${moviesRdd.count}")
     moviesRdd.printSchema()
@@ -105,19 +109,20 @@ class Mongo {
     .show()
   }
 
-  def getUserMovieRatingsIds(): RDD[Rating] = {
-    val spark = connectToMongoDb()
-    val usersRdd = getCollection(spark, "users")
-
-    val ratingsByUser = usersRdd.select(col("_id"), col("movies"))
+  def getUserMovieRatingsIds(): Dataset[Row]= {
+    val ratingsByUser = usersRdd
+            .select(col("_id"), col("movies"))
             .withColumn("movies", explode(usersRdd("movies")))
             .withColumn("movieId", col("movies.movieId"))
             .withColumn("rating", col("movies.rating"))
             .drop(col("movies"))
 
-    import spark.implicits._
+    return ratingsByUser
+  }
 
-    val ratingForAls : RDD[Rating] = ratingsByUser.rdd.map({
+  def getUserMovieRatingsIdsAls(): RDD[Rating]= {
+    val ratings = getUserMovieRatingsIds()
+    val ratingForAls : RDD[Rating] = ratings.rdd.map({
       case Row(user:Int, item:Int, rate:Int) => Rating(user.toInt, item.toInt, rate.toFloat)
     })
 
@@ -125,20 +130,23 @@ class Mongo {
   }
 
   def getUserPreferences(userId : Int): Unit = {
-    val spark = connectToMongoDb()
-    val usersRdd = getCollection(spark, "users")
+    println(s"User preferences $userId")
+    val ratingsByUser = getUserMovieRatingsIds()
+                        .filter(col("_id") === userId)
+                        .orderBy(col("rating").asc)
+                        .limit(20)
+    
+    for (rating <- ratingsByUser.collect()) {
+      getMovieName(rating(1).toString.toInt)
+    }
+  }
 
-    val ratingsByUser = usersRdd.select(col("_id"), col("movies"))
-            .withColumn("movies", explode(usersRdd("movies")))
-            .withColumn("movieId", col("movies.movieId"))
-            .withColumn("rating", col("movies.rating"))
-            .drop(col("movies"))
-            .filter(col("_id") === userId)
-            .show()
-
-    // var userRatings = ratings.filter("userID = 237").orderBy("rating")
-    // for (rating <- userRatings.collect()) {
-      // println(movieNames(rating(1).toString.toInt), rating(2))
-    // }
+  def getMovieName(movieId : Int) : Unit = {
+    val movie = moviesRdd
+    .select(col("title"))
+    .filter(col("_id") === movieId)
+    .as[String]
+    .collect()
+    .foreach(println)
   }
 }
