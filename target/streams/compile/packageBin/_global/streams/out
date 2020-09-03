@@ -1,0 +1,17 @@
+[0m[[0m[0mdebug[0m] [0m[0mPackaging /Users/nohossat/Documents/simplon/big_data/reco_system/target/scala-2.12/recommendation-system_2.12-0.1.0-SNAPSHOT.jar ...[0m
+[0m[[0m[0mdebug[0m] [0m[0mInput file mappings:[0m
+[0m[[0m[0mdebug[0m] [0m[0m	recommendation[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /Users/nohossat/Documents/simplon/big_data/reco_system/target/scala-2.12/classes/recommendation[0m
+[0m[[0m[0mdebug[0m] [0m[0m	recommendation/Algo.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /Users/nohossat/Documents/simplon/big_data/reco_system/target/scala-2.12/classes/recommendation/Algo.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	recommendation/Mongo.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /Users/nohossat/Documents/simplon/big_data/reco_system/target/scala-2.12/classes/recommendation/Mongo.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	recommendation/Main$.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /Users/nohossat/Documents/simplon/big_data/reco_system/target/scala-2.12/classes/recommendation/Main$.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	recommendation/Main.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /Users/nohossat/Documents/simplon/big_data/reco_system/target/scala-2.12/classes/recommendation/Main.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	recommendation/Main$delayedInit$body.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /Users/nohossat/Documents/simplon/big_data/reco_system/target/scala-2.12/classes/recommendation/Main$delayedInit$body.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	HSpark.class[0m
+[0m[[0m[0mdebug[0m] [0m[0m	  /Users/nohossat/Documents/simplon/big_data/reco_system/target/scala-2.12/classes/HSpark.class[0m
+[0m[[0m[0mdebug[0m] [0m[0mDone packaging.[0m
