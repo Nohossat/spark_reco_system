@@ -148,5 +148,6 @@ class Mongo {
     .as[String]
     .collect()
     .foreach(println)
-  }
+  } 
+  // see if we can have genre also 
 }

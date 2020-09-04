@@ -9,8 +9,7 @@ object Main extends App {
     val ratings = mongo.getUserMovieRatingsIds()
     val ratingsAls = mongo.getUserMovieRatingsIdsAls()
     val userId = 100
-
-
+    
     // Recommendation system
     mongo.getUserPreferences(userId)
     val recommendations = algo.getPredictions(spark, ratings, ratingsAls, userId)
