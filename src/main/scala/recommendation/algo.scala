@@ -5,11 +5,24 @@ import org.apache.spark.mllib.recommendation.{ALS, Rating, MatrixFactorizationMo
 import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.spark.sql.functions._
 import java.nio.file.{Paths, Files}
+import scala.collection.mutable.ArrayBuffer
 
 class Algo {
+    var bestRMSE : Double = 0
+    var bestParams : ArrayBuffer[Double] = ArrayBuffer[Double]()
+    var bestModel : MatrixFactorizationModel = null
+    // best params for now : rank : 2.0 numIter : 3.0 , lambda : 0.001 : 0.9738304574084871
+    // relaunch it to get the final results
+
     def trainModel(spark : SparkSession, ratings: RDD[Rating], rank : Int, numIter : Int): MatrixFactorizationModel = {
         
         val Array(training, test) = ratings.randomSplit(Array(0.8, 0.2))
+
+        val params = Map(
+            "lambda" -> Array(0.001, 0.01, 0.1),
+            "numIter" -> Array(10.0),
+            "rank" -> Array(10.0)
+        )
         
         // load existing model if exists
         var model : MatrixFactorizationModel = null
@@ -17,7 +30,12 @@ class Algo {
         if (Files.exists(Paths.get("als_model"))) {
             model = MatrixFactorizationModel.load(spark.sparkContext, "als_model")
         } else {
-            model = ALS.train(training, rank, numIter, 0.01)
+            // do grid search : return model + grid search
+            // i think it should be done on the train / val sets !!
+            var idx : Int = params.size - 1
+
+            println("start grid search")
+            model = doGridSearch(ratings, params, idx, ArrayBuffer())
             model.save(spark.sparkContext, "als_model")
             val rmse = getMetrics(training, test, model)
             println("Mean Squared Error = " + rmse)
@@ -43,6 +61,49 @@ class Algo {
             }.mean()) // current : 0.88
         return RMSE
     }
+
+    def doGridSearch(ratings: RDD[Rating], grid_search_params : Map[String, Array[Double]], idx : Int, currentParams : ArrayBuffer[Double]): MatrixFactorizationModel = {
+        val Array(training, test) = ratings.randomSplit(Array(0.8, 0.2))
+        val params = grid_search_params.keys.toList // get grid search paramaters names
+        var model : MatrixFactorizationModel = null
+
+
+        if (idx == 0) {
+            for (param_value <- grid_search_params(params(idx))) {
+                val updated_params : ArrayBuffer[Double] = currentParams.clone
+                updated_params += param_value
+
+                //  launch grid_search
+                println(updated_params.mkString(" "))
+                val ArrayBuffer(rank, numIter, lambda) = updated_params
+                model = ALS.train(training, rank.toInt, numIter.toInt, lambda)
+                val rmse = getMetrics(training, test, model)
+                println(rmse)
+
+                // update best model + config if better
+                if (bestRMSE < rmse) {
+                    bestRMSE = rmse
+                    bestParams = updated_params
+                    bestModel = model
+                }
+            }
+        }
+
+        if (idx > 0) {
+            for (param_value <- grid_search_params(params(idx))) {
+
+                val updated_params : ArrayBuffer[Double] = currentParams.clone
+                updated_params += param_value
+                println(updated_params.mkString(" "))
+
+                val param_idx : Int = idx - 1
+                doGridSearch(ratings, grid_search_params, param_idx, updated_params)
+            }
+        }
+
+        return model
+    }
+
 
     def getPredictions(spark : SparkSession, ratings: Dataset[Row], ratingsAls: RDD[Rating], userId: Int): Array[Rating] = {
         // train model

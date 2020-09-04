@@ -15,7 +15,7 @@ object Main extends App {
     // put mongo credentials inside an application.conf
 
     // Recommendation system
-    mongo.getUserPreferences(userId)
+    // mongo.getUserPreferences(userId)
     val recommendations = algo.getPredictions(spark, ratings, ratingsAls, userId)
     // Printing the top recommendations
     println("\nBest 7 Recommendations:")
