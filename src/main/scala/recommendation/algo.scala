@@ -17,7 +17,6 @@ class Algo {
         if (Files.exists(Paths.get("als_model"))) {
             model = MatrixFactorizationModel.load(spark.sparkContext, "als_model")
         } else {
-            println("model doesnt exist")
             model = ALS.train(training, rank, numIter, 0.01)
             model.save(spark.sparkContext, "als_model")
             val rmse = getMetrics(training, test, model)
@@ -41,11 +40,10 @@ class Algo {
         val RMSE = math.sqrt(ratesAndPreds.map { case ((user, product), (r1, r2)) =>
             val err = (r1 - r2)
             err * err
-            }.mean())
+            }.mean()) // current : 0.88
         return RMSE
     }
 
-    
     def getPredictions(spark : SparkSession, ratings: Dataset[Row], ratingsAls: RDD[Rating], userId: Int): Array[Rating] = {
         // train model
         val userProducts = ratings.select(ratings("_id"), ratings("movieId"))

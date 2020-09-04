@@ -8,12 +8,15 @@ object Main extends App {
     val spark = mongo.connectToMongoDb()
     val ratings = mongo.getUserMovieRatingsIds()
     val ratingsAls = mongo.getUserMovieRatingsIdsAls()
-    val userId = 100
-    
+    val userId = 200
+
+    // Room for improvement 
+    // do a grid search
+    // put mongo credentials inside an application.conf
+
     // Recommendation system
     mongo.getUserPreferences(userId)
     val recommendations = algo.getPredictions(spark, ratings, ratingsAls, userId)
-
     // Printing the top recommendations
     println("\nBest 7 Recommendations:")
     for (recommendation <- recommendations) {

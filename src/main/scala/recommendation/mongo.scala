@@ -137,17 +137,17 @@ class Mongo {
                         .limit(20)
     
     for (rating <- ratingsByUser.collect()) {
-      getMovieName(rating(1).toString.toInt)
+      println(getMovieName(rating(1).toString.toInt))
     }
   }
 
-  def getMovieName(movieId : Int) : Unit = {
+  def getMovieName(movieId : Int) : Row = {
     val movie = moviesRdd
-    .select(col("title"))
+    .select(col("title"), col("genres"))
     .filter(col("_id") === movieId)
-    .as[String]
-    .collect()
-    .foreach(println)
+    .first()
+
+    return movie
   } 
   // see if we can have genre also 
 }
