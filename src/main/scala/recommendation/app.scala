@@ -10,9 +10,6 @@ object Main extends App {
     val ratingsAls = mongo.getUserMovieRatingsIdsAls()
     val userId = 200
 
-    // Room for improvement 
-    // put mongo credentials inside an application.conf
-
     // Recommendation system
     mongo.getUserPreferences(userId)
     val recommendations = algo.getPredictions(spark, ratings, ratingsAls, userId)
