@@ -10,6 +10,7 @@ import org.apache.log4j.{Logger,Level}
 import org.bson.Document
 import org.apache.spark.mllib.recommendation.Rating
 import scala.collection.mutable
+import com.typesafe.config.ConfigFactory
 
 class Mongo {
 
@@ -17,11 +18,17 @@ class Mongo {
     Logger.getLogger("org").setLevel(Level.OFF)
     Logger.getLogger("akka").setLevel(Level.OFF)
 
+    // get MongoDB user config
+    val user = ConfigFactory.load().getString("mongo.user.value")
+    val pwd = ConfigFactory.load().getString("mongo.pwd.value")
+    val cluster = ConfigFactory.load().getString("mongo.cluster.value")
+    val database = ConfigFactory.load().getString("mongo.database.value")
+
     val sp = SparkSession.builder()
     .master("local[8]")
     .appName("MongoSparkConnectorIntro")
-    .config("spark.mongodb.input.uri", "mongodb+srv://m001-student:m001-mongodb-basics@nodecluster-dfgwa.mongodb.net/simplon?readPreference=primaryPreferred")
-    .config("spark.mongodb.output.uri", "mongodb+srv://m001-student:m001-mongodb-basics@nodecluster-dfgwa.mongodb.net/simplon")
+    .config("spark.mongodb.input.uri", s"mongodb+srv://$user:$pwd@$cluster/$database?readPreference=primaryPreferred")
+    .config("spark.mongodb.output.uri", s"mongodb+srv://$user:$pwd@$cluster/$database")
     .config("spark.executor.heartbeatInterval", "10s")
     .getOrCreate()
 

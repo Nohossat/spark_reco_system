@@ -11,8 +11,7 @@ class Algo {
     var bestRMSE : Double = 0
     var bestParams : ArrayBuffer[Double] = ArrayBuffer[Double]()
     var bestModel : MatrixFactorizationModel = null
-    // best params for now : rank : 2.0 numIter : 3.0 , lambda : 0.001 : 0.9738304574084871
-    // relaunch it to get the final results
+    // best params for now : ??
 
     def trainModel(spark : SparkSession, ratings: RDD[Rating], rank : Int, numIter : Int): MatrixFactorizationModel = {
         
@@ -20,8 +19,8 @@ class Algo {
 
         val params = Map(
             "lambda" -> Array(0.001, 0.01, 0.1),
-            "numIter" -> Array(10.0),
-            "rank" -> Array(10.0)
+            "numIter" -> Array(4.0, 10.0, 15.0),
+            "rank" -> Array(5.0, 7.0, 10.0)
         )
         
         // load existing model if exists
@@ -103,7 +102,6 @@ class Algo {
 
         return model
     }
-
 
     def getPredictions(spark : SparkSession, ratings: Dataset[Row], ratingsAls: RDD[Rating], userId: Int): Array[Rating] = {
         // train model
