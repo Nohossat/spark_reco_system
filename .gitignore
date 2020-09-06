@@ -1,2 +1,10 @@
 src/main/resources/application.conf
 .idea
+.DS_Store
+*.iml
+*.ipr
+*.iws
+.idea
+out
+target
+*.class

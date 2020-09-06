@@ -1,4 +1,0 @@
-[0m[[0m[31merror[0m] [0m[0m/Users/nohossat/Documents/simplon/big_data/reco_system/src/main/scala/recommendation/app.scala:8:22: not found: type Config[0m
-[0m[[0m[31merror[0m] [0m[0m    val config = new Config()[0m
-[0m[[0m[31merror[0m] [0m[0m                     ^[0m
-[0m[[0m[31merror[0m] [0m[0mone error found[0m
