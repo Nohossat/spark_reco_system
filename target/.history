@@ -263,3 +263,5 @@ compile
 exit
 compile
 run
+compile
+run

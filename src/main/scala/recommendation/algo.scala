@@ -11,31 +11,31 @@ class Algo {
     var bestRMSE : Double = 0
     var bestParams : ArrayBuffer[Double] = ArrayBuffer[Double]()
     var bestModel : MatrixFactorizationModel = null
-    // best params for now : ??
 
     def trainModel(spark : SparkSession, ratings: RDD[Rating], rank : Int, numIter : Int): MatrixFactorizationModel = {
         
         val Array(training, test) = ratings.randomSplit(Array(0.8, 0.2))
-
-        val params = Map(
-            "lambda" -> Array(0.001, 0.01, 0.1),
-            "numIter" -> Array(4.0, 10.0, 15.0),
-            "rank" -> Array(5.0, 7.0, 10.0)
-        )
-        
-        // load existing model if exists
         var model : MatrixFactorizationModel = null
 
+        // load existing model if exists
         if (Files.exists(Paths.get("als_model"))) {
             model = MatrixFactorizationModel.load(spark.sparkContext, "als_model")
         } else {
-            // do grid search : return model + grid search
-            // i think it should be done on the train / val sets !!
+            // params grid search
+            val params = Map(
+                "lambda" -> Array(0.001, 0.01, 0.1),
+                "numIter" -> Array(4.0, 10.0, 15.0),
+                "rank" -> Array(5.0, 7.0, 10.0)
+            )
+            
             var idx : Int = params.size - 1
 
             println("start grid search")
-            model = doGridSearch(ratings, params, idx, ArrayBuffer())
+            model = doGridSearch(training, params, idx, ArrayBuffer())
+            println("done with grid search")
             model.save(spark.sparkContext, "als_model")
+
+            // metrics
             val rmse = getMetrics(training, test, model)
             println("Mean Squared Error = " + rmse)
         }
@@ -57,7 +57,7 @@ class Algo {
         val RMSE = math.sqrt(ratesAndPreds.map { case ((user, product), (r1, r2)) =>
             val err = (r1 - r2)
             err * err
-            }.mean()) // current : 0.88
+            }.mean())
         return RMSE
     }
 
