@@ -24,5 +24,5 @@ run
 
 ## Improvements
 
-- [ ] - Allow the user to choose the userId from the CLI. 
-- [ ] - Create an UI
+- [ ] Allow the user to choose the userId from the CLI. 
+- [ ] Create an UI
