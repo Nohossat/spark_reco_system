@@ -14,18 +14,18 @@ import com.typesafe.config.ConfigFactory
 
 class Mongo {
 
-  def connectToMongoDb() : SparkSession = {
-    Logger.getLogger("org").setLevel(Level.OFF)
-    Logger.getLogger("akka").setLevel(Level.OFF)
-
-    // get MongoDB user config
+  // get MongoDB user config
     val user = ConfigFactory.load().getString("mongo.user.value")
     val pwd = ConfigFactory.load().getString("mongo.pwd.value")
     val cluster = ConfigFactory.load().getString("mongo.cluster.value")
     val database = ConfigFactory.load().getString("mongo.database.value")
 
+  def connectToMongoDb() : SparkSession = {
+    Logger.getLogger("org").setLevel(Level.OFF)
+    Logger.getLogger("akka").setLevel(Level.OFF)
+
     val sp = SparkSession.builder()
-    .master("local[8]")
+    .master("local[*]")
     .appName("MongoSparkConnectorIntro")
     .config("spark.mongodb.input.uri", s"mongodb+srv://$user:$pwd@$cluster/$database?readPreference=primaryPreferred")
     .config("spark.mongodb.output.uri", s"mongodb+srv://$user:$pwd@$cluster/$database")
@@ -41,10 +41,11 @@ class Mongo {
   import spark.implicits._
   val moviesRdd = getCollection("movies")
   val usersRdd = getCollection("users")
+  val movieIdRdd = getCollection("movies_id")
 
   def getCollection(collection : String) : Dataset[Row] = {
     var readConfig = ReadConfig(Map(
-    "uri" -> "mongodb+srv://m001-student:m001-mongodb-basics@nodecluster-dfgwa.mongodb.net/", 
+    "uri" -> s"mongodb+srv://$user:$pwd@$cluster/", 
     "database" -> "simplon", 
     "collection" -> collection))
 
@@ -52,9 +53,16 @@ class Mongo {
     return rdd
   }
 
+  def saveToMongo(dataset : Dataset[Row], collection: String): Unit = {
+    var writeConfig = WriteConfig(Map(
+    "uri" -> s"mongodb+srv://$user:$pwd@$cluster/", 
+    "database" -> "simplon", 
+    "collection" -> collection))
+
+    MongoSpark.save(dataset, writeConfig)
+  }
+
   def getDataAnalysis(): Unit = {
-    val spark = connectToMongoDb()
-    
     // EDA for users
     println("Analysis for Movielens users")
 
@@ -116,6 +124,29 @@ class Mongo {
     .show()
   }
 
+  def getMovieIds() : Dataset[Row] = {
+    val ids = movieIdRdd
+              .select(col("tmdbId"))
+    return ids
+  }
+
+  def joinMoviesListWithIds() : Dataset[Row] = {
+    moviesRdd.createOrReplaceTempView("movies")
+    movieIdRdd.createOrReplaceTempView("movies_ref")
+
+    moviesRdd.printSchema()
+    movieIdRdd.printSchema()
+
+    val sqlMovies = spark.sql("""
+      SELECT movies._id, movies.title, movies.genres, movies_ref.tmdbId
+      FROM movies
+      INNER JOIN movies_ref ON movies._id = movies_ref.movieId
+      WHERE movies_ref.tmdbId != ""
+    """)
+
+    return sqlMovies
+  }
+
   def getUserMovieRatingsIds(): Dataset[Row]= {
     val ratingsByUser = usersRdd
             .select(col("_id"), col("movies"))
@@ -156,5 +187,20 @@ class Mongo {
 
     return movie
   } 
-  // see if we can have genre also 
+
+  def saveDescForMovies() : Unit = {
+        // we merge movies and movies_id datasets to get all the values necessary for data analysis + modeling
+        val movie = new Movie()
+
+        val moviesDF = joinMoviesListWithIds()
+
+        val getMovieInfoUDF = udf((id : Int) => movie.getMovieDescription(id))
+        val moviesWithDesc = moviesDF
+                            .withColumn("description", getMovieInfoUDF(col("tmdbId")))
+        
+        moviesWithDesc.show()
+
+        // save to mongoDB
+        saveToMongo(moviesWithDesc, "movies_full")
+    }
 }

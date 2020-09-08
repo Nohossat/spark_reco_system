@@ -7,7 +7,7 @@ import org.apache.spark.sql.functions._
 import java.nio.file.{Paths, Files}
 import scala.collection.mutable.ArrayBuffer
 
-class Algo {
+class CollaborativeFiltering {
     var bestRMSE : Double = 0
     var bestParams : ArrayBuffer[Double] = ArrayBuffer[Double]()
     var bestModel : MatrixFactorizationModel = null
