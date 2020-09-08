@@ -8,3 +8,7 @@ src/main/resources/application.conf
 out
 target
 *.class
+.bloop
+.metals
+.vscode
+systeme_reco_consignes.pdf
